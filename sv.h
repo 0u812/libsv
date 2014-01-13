@@ -50,5 +50,10 @@ sv_status_t sv_set_option(sv *t, sv_option_t option, ...);
 int sv_get_line(sv *t);
 const char* sv_get_header(sv *t, unsigned int i, size_t *width_p);
 
+/* input */
 sv_status_t sv_parse_chunk(sv *t, char *buffer, size_t len);
 
+/* output */
+int sv_print_headers(FILE* fh, sv *t);
+
+int sv_print_fields(FILE* fh, sv *t, char** fields, size_t *widths, size_t count);

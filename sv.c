@@ -694,3 +694,88 @@ sv_set_option(sv *t, sv_option_t option, ...)
 
   return status;
 }
+
+
+static int
+sv_print_field(FILE* fh, sv* t, const char* str)
+{
+  int need_quoting = 0;
+  int ch;
+  const char* p = str;
+
+  while((ch = *p++)) {
+    if(ch == '\t' || ch == '\r' || ch == '\n') {
+      need_quoting = 1;
+      break;
+    }
+    if(ch == t->quote_char) {
+      need_quoting = 1;
+      break;
+    }
+  }
+
+  if(need_quoting)
+    fputc(t->quote_char, fh);
+
+  while((ch = *str++)) {
+    if(ch == '\t')
+      fputs("\\t", fh);
+    else if(ch == '\r')
+      fputs("\\r", fh);
+    else if(ch == '\n')
+      fputs("\\n", fh);
+    else if(ch == t->quote_char) {
+      if(t->field_sep == '\t') {
+        /* double it */
+        fputc(ch, fh);
+        fputc(ch, fh);
+      } else
+        fputc(ch, fh);
+    } else
+      fputc(ch, fh);
+  }
+
+  if(need_quoting)
+    fputc(t->quote_char, fh);
+  return 0;
+}
+
+
+static int
+sv_print_eol(FILE* fh, sv *t)
+{
+  fputs("\r\n", fh);
+  return 0;
+}
+
+
+int
+sv_print_headers(FILE* fh, sv *t)
+{
+  unsigned int i;
+
+  for(i = 0; i < t->fields_count; i++) {
+    if(i < t->fields_count)
+      fputc(t->field_sep, fh);
+
+    sv_print_field(fh, t, t->headers[i]);
+  }
+  sv_print_eol(fh, t);
+  return 0;
+}
+
+
+int
+sv_print_fields(FILE* fh, sv *t, char** fields, size_t *widths, size_t count)
+{
+  unsigned int i;
+
+  for(i = 0; i < count; i++) {
+    if(i < count)
+      fputc(t->field_sep, fh);
+
+    sv_print_field(fh, t, fields[i]);
+  }
+  sv_print_eol(fh, t);
+  return 0;
+}
